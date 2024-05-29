@@ -76,7 +76,7 @@ impl YUVBuffer {
     ///
     /// May panic if the given sizes are not multiples of 2, or the yuv buffer's size mismatches.
     pub fn from_vec(yuv: Vec<u8>, width: usize, height: usize) -> Self {
-        assert_eq!(width % 2, 0, "width needs to be multiple of 2");
+        assert_eq!(width % 2, 0, "width needs to be a multiple of 2");
         assert_eq!(height % 2, 0, "height needs to be a multiple of 2");
         assert_eq!(yuv.len(), (3 * (width * height)) / 2, "YUV buffer needs to be properly sized");
 
@@ -91,7 +91,7 @@ impl YUVBuffer {
     ///
     /// May panic if the given sizes are not multiples of 2.
     pub fn new(width: usize, height: usize) -> Self {
-        assert_eq!(width % 2, 0, "width needs to be multiple of 2");
+        assert_eq!(width % 2, 0, "width needs to be a multiple of 2");
         assert_eq!(height % 2, 0, "height needs to be a multiple of 2");
 
         Self {
