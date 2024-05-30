@@ -4,7 +4,9 @@ use crate::error::NativeErrorExt;
 use crate::formats::YUVSource;
 use crate::{Error, OpenH264API, Timestamp};
 use openh264_sys2::{
-    videoFormatI420, ISVCDecoder, ISVCDecoderVtbl, SBufferInfo, SDecodingParam, SParserBsInfo, SSysMEMBuffer, API, DECODER_OPTION, DECODER_OPTION_ERROR_CON_IDC, DECODER_OPTION_NUM_OF_FRAMES_REMAINING_IN_BUFFER, DECODER_OPTION_NUM_OF_THREADS, DECODER_OPTION_TRACE_LEVEL, DECODING_STATE, WELS_LOG_DETAIL, WELS_LOG_QUIET
+    videoFormatI420, ISVCDecoder, ISVCDecoderVtbl, SBufferInfo, SDecodingParam, SParserBsInfo, SSysMEMBuffer, API,
+    DECODER_OPTION, DECODER_OPTION_ERROR_CON_IDC, DECODER_OPTION_NUM_OF_FRAMES_REMAINING_IN_BUFFER,
+    DECODER_OPTION_NUM_OF_THREADS, DECODER_OPTION_TRACE_LEVEL, DECODING_STATE, WELS_LOG_DETAIL, WELS_LOG_QUIET,
 };
 use std::os::raw::{c_int, c_long, c_uchar, c_void};
 use std::ptr::{addr_of_mut, null, null_mut};
@@ -210,7 +212,7 @@ impl Decoder {
                 }
             }
 
-            let info = buffer_info.UsrData.sSystemBuffer;
+            let mut info = buffer_info.UsrData.sSystemBuffer;
             let timestamp = Timestamp::from_millis(buffer_info.uiInBsTimeStamp); // TODO: Is this the right one?
 
             // Apparently it is ok for `decode_frame_no_delay` to not return an error _and_ to return null buffers. In this case
@@ -219,10 +221,32 @@ impl Decoder {
                 return Ok(None);
             }
 
+            fn move_zeroes(nums: &mut [u8]) {
+                let mut last_non_zero_found_at = 0;
+
+                for cur in 0..nums.len() {
+                    if nums[cur] != 0 {
+                        nums.swap(last_non_zero_found_at, cur);
+                        last_non_zero_found_at += 1;
+                    }
+                }
+            }
+
             // https://github.com/cisco/openh264/issues/2379
-            let y = std::slice::from_raw_parts(dst[0], (info.iHeight * info.iStride[0]) as usize);
-            let u = std::slice::from_raw_parts(dst[1], (info.iHeight * info.iStride[1] / 2) as usize);
-            let v = std::slice::from_raw_parts(dst[2], (info.iHeight * info.iStride[1] / 2) as usize);
+            let y = std::slice::from_raw_parts_mut(dst[0], (info.iHeight * info.iStride[0]) as usize);
+            let u = std::slice::from_raw_parts_mut(dst[1], (info.iHeight * info.iStride[1] / 2) as usize);
+            let v = std::slice::from_raw_parts_mut(dst[2], (info.iHeight * info.iStride[1] / 2) as usize);
+
+            move_zeroes(y);
+            move_zeroes(u);
+            move_zeroes(v);
+
+            let y = std::slice::from_raw_parts(y.as_ptr(), (info.iHeight * info.iWidth) as usize);
+            let u = std::slice::from_raw_parts(u.as_ptr(), ((info.iHeight / 2) * (info.iWidth / 2)) as usize);
+            let v = std::slice::from_raw_parts(v.as_ptr(), ((info.iHeight / 2) * (info.iWidth / 2)) as usize);
+
+            info.iStride[0] = info.iWidth;
+            info.iStride[1] = info.iWidth / 2;
 
             Ok(Some(DecodedYUV {
                 info,

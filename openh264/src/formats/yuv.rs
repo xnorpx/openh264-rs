@@ -76,8 +76,8 @@ impl YUVBuffer {
     ///
     /// May panic if the given sizes are not multiples of 2, or the yuv buffer's size mismatches.
     pub fn from_vec(yuv: Vec<u8>, width: usize, height: usize) -> Self {
-        assert_eq!(width % 2, 0, "width needs to be a multiple of 2");
-        assert_eq!(height % 2, 0, "height needs to be a multiple of 2");
+        assert_eq!(width % 2, 0, "width needs to be multiple of 2");
+        assert_eq!(width % 2, 0, "width needs to be multiple of 2");
         assert_eq!(yuv.len(), (3 * (width * height)) / 2, "YUV buffer needs to be properly sized");
 
         Self { yuv, width, height }
@@ -91,7 +91,7 @@ impl YUVBuffer {
     ///
     /// May panic if the given sizes are not multiples of 2.
     pub fn new(width: usize, height: usize) -> Self {
-        assert_eq!(width % 2, 0, "width needs to be a multiple of 2");
+        assert_eq!(width % 2, 0, "width needs to be multiple of 2");
         assert_eq!(height % 2, 0, "height needs to be a multiple of 2");
 
         Self {
@@ -206,7 +206,7 @@ impl<'a> YUVSlices<'a> {
         assert!(strides.1 >= dimensions.0 / 2);
         assert!(strides.2 >= dimensions.0 / 2);
 
-        assert_eq!(dimensions.1 * strides.0, yuv.0.len());
+        assert_eq!((dimensions.1 / 2) * strides.0, yuv.0.len());
         assert_eq!((dimensions.1 / 2) * strides.1, yuv.1.len());
         assert_eq!((dimensions.1 / 2) * strides.2, yuv.2.len());
 
