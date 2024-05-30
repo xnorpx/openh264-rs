@@ -206,7 +206,7 @@ impl<'a> YUVSlices<'a> {
         assert!(strides.1 >= dimensions.0 / 2);
         assert!(strides.2 >= dimensions.0 / 2);
 
-        assert_eq!((dimensions.1 / 2) * strides.0, yuv.0.len());
+        assert_eq!(dimensions.1 * strides.0, yuv.0.len());
         assert_eq!((dimensions.1 / 2) * strides.1, yuv.1.len());
         assert_eq!((dimensions.1 / 2) * strides.2, yuv.2.len());
 
